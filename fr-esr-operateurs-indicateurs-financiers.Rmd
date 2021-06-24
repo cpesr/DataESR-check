@@ -17,8 +17,9 @@ fin <- read.csv("fr-esr-operateurs-indicateurs-financiers.csv",sep=";",quote='"'
 
 ## soucis généraux 
 
-- Variable `Column.1` au milieu du jeu de données
-- Variables financières coupées en deux groupes, avec les variables administratives au milieu
+- Variable `Column.1` au milieu du jeu de données.
+- Variables financières coupées en deux groupes, avec les variables administratives au milieu.
+- Détails des différentes ressources propres absents pour tous les établissement en 2016 et 2017.
 
 ## Etablissements manquants
 
@@ -59,4 +60,18 @@ fin %>%
   kableExtra::kable()
 ```
 
+## Incohérences Ressources propres / Produit encaissable
+
+Détection des incohérences (à 1% près) pour `calculé =  Ressources propres / Produit encaissable`
+
+
+```{r}
+fin %>%
+  select(etablissement,exercice,Produits.de.fonctionnement.encaissables,Ressources.propres,Ressources.propres...Produits.encaissables) %>%
+  mutate(calculé = Ressources.propres / Produits.de.fonctionnement.encaissables * 100) %>%
+  mutate(écart = round(Ressources.propres...Produits.encaissables - calculé)) %>%
+  arrange(desc(écart)) %>%
+  filter(écart != 0) %>%
+  kableExtra::kable()
+```
 
