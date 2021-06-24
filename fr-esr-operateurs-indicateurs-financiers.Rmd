@@ -1,0 +1,62 @@
+---
+title: "fr-esr-operateurs-indicateurs-financiers."
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+```
+
+Jeu de données :
+https://data.enseignementsup-recherche.gouv.fr/explore/dataset/fr-esr-operateurs-indicateurs-financiers
+
+```{r data}
+fin <- read.csv("fr-esr-operateurs-indicateurs-financiers.csv",sep=";",quote='"', stringsAsFactors = TRUE)
+```
+
+## soucis généraux 
+
+- Variable `Column.1` au milieu du jeu de données
+- Variables financières coupées en deux groupes, avec les variables administratives au milieu
+
+## Etablissements manquants
+
+```{r}
+fin %>%
+  select(Column.1,uai...identifiant,etablissement) %>%
+  unique() %>% 
+  filter(etablissement == "") %>%
+  kableExtra::kable()
+```
+
+
+## Incohérences SCSP = Produit encaissable - Ressources propres
+
+Détection des valeurs négatives pour `SCSP = Produit encaissable - Ressources propres`
+
+```{r}
+fin %>%
+  select(etablissement,exercice,Produits.de.fonctionnement.encaissables,Ressources.propres) %>%
+  mutate(SCSP = Produits.de.fonctionnement.encaissables - Ressources.propres) %>%
+  arrange(SCSP) %>%
+  filter(SCSP < 0) %>%
+  kableExtra::kable()
+```
+
+## Incohérences Ressources propres / Produit encaissable
+
+Détection des incohérences (à 1% près) pour `calculé =  Ressources propres / Produit encaissable`
+
+
+```{r}
+fin %>%
+  select(etablissement,exercice,Produits.de.fonctionnement.encaissables,Ressources.propres,Ressources.propres...Produits.encaissables) %>%
+  mutate(calculé = Ressources.propres / Produits.de.fonctionnement.encaissables * 100) %>%
+  mutate(écart = round(Ressources.propres...Produits.encaissables - calculé)) %>%
+  arrange(desc(écart)) %>%
+  filter(écart != 0) %>%
+  kableExtra::kable()
+```
+
+
